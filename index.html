@@ -1,0 +1,1152 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>QuanTravel AI - Your Personal Travel Assistant</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --wa-header: #075E54;
+            --wa-bg: #ECE5DD;
+            --wa-user-msg: #DCF8C6;
+            --wa-bot-msg: #FFFFFF;
+            --text-dark: #303030;
+            --text-light: #7A7A7A;
+            --primary-accent: #128C7E;
+            --success-color: #25D366;
+            --font-family: 'Inter', sans-serif;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: var(--font-family);
+            background-color: #d1d7db;
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden;
+        }
+
+        /* App Container Layout */
+        .app-container {
+            display: flex;
+            width: 100%;
+            height: 100vh;
+            max-width: 1400px;
+            background: white;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+        }
+
+        /* --- Left Panel (Chat) --- */
+        .chat-panel {
+            flex: 6;
+            display: flex;
+            flex-direction: column;
+            border-right: 1px solid #ddd;
+            background-color: var(--wa-bg);
+            position: relative;
+        }
+
+        .chat-header {
+            background-color: var(--wa-header);
+            color: white;
+            padding: 15px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            z-index: 10;
+        }
+
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .app-title {
+            font-size: 1.2rem;
+            font-weight: 600;
+        }
+
+        .header-right {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .leads-counter {
+            font-size: 0.9rem;
+            font-weight: 500;
+            background: rgba(255,255,255,0.2);
+            padding: 4px 10px;
+            border-radius: 12px;
+        }
+
+        .btn-view-leads {
+            background-color: white;
+            color: var(--wa-header);
+            border: none;
+            padding: 6px 12px;
+            border-radius: 4px;
+            font-weight: 600;
+            font-size: 0.85rem;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn-view-leads:hover {
+            background-color: #e0e0e0;
+        }
+
+        .chat-history {
+            flex: 1;
+            padding: 20px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            background-image: url('https://user-images.githubusercontent.com/15075759/28719144-86dc0f70-73b1-11e7-911d-60d70fcded21.png');
+            background-repeat: repeat;
+            background-color: var(--wa-bg);
+            background-blend-mode: multiply;
+        }
+
+        /* Scrollbar styles */
+        .chat-history::-webkit-scrollbar {
+            width: 6px;
+        }
+        .chat-history::-webkit-scrollbar-thumb {
+            background-color: rgba(0,0,0,0.2);
+            border-radius: 3px;
+        }
+
+        .message-row {
+            display: flex;
+            width: 100%;
+            margin-bottom: 5px;
+        }
+
+        .message-row.user {
+            justify-content: flex-end;
+        }
+
+        .message-row.bot {
+            justify-content: flex-start;
+        }
+
+        .message-bubble {
+            max-width: 75%;
+            padding: 10px 14px 18px 14px;
+            border-radius: 8px;
+            position: relative;
+            font-size: 0.95rem;
+            line-height: 1.4;
+            color: var(--text-dark);
+            box-shadow: 0 1px 1px rgba(0,0,0,0.1);
+            word-wrap: break-word;
+        }
+
+        .message-bubble strong {
+            font-weight: 600;
+            color: #111;
+        }
+        
+        .message-bubble p {
+            margin-bottom: 8px;
+        }
+        .message-bubble p:last-child {
+            margin-bottom: 0;
+        }
+
+        .message-row.user .message-bubble {
+            background-color: var(--wa-user-msg);
+            border-top-right-radius: 0;
+        }
+
+        .message-row.bot .message-bubble {
+            background-color: var(--wa-bot-msg);
+            border-top-left-radius: 0;
+        }
+
+        /* Message Tails */
+        .message-row.user .message-bubble::before {
+            content: "";
+            position: absolute;
+            top: 0;
+            right: -8px;
+            width: 0;
+            height: 0;
+            border-top: 10px solid var(--wa-user-msg);
+            border-right: 10px solid transparent;
+        }
+
+        .message-row.bot .message-bubble::before {
+            content: "";
+            position: absolute;
+            top: 0;
+            left: -8px;
+            width: 0;
+            height: 0;
+            border-top: 10px solid var(--wa-bot-msg);
+            border-left: 10px solid transparent;
+        }
+
+        .msg-meta {
+            position: absolute;
+            bottom: 3px;
+            right: 8px;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            font-size: 0.65rem;
+            color: var(--text-light);
+        }
+
+        .msg-ticks {
+            color: #53bdeb; /* Blue ticks */
+            font-size: 0.7rem;
+            letter-spacing: -2px;
+        }
+
+        /* Typing Indicator */
+        .typing-indicator {
+            display: none;
+            padding: 12px 16px;
+            background: var(--wa-bot-msg);
+            border-radius: 15px;
+            border-top-left-radius: 0;
+            width: max-content;
+            box-shadow: 0 1px 1px rgba(0,0,0,0.1);
+            margin-bottom: 10px;
+        }
+
+        .typing-indicator span {
+            display: inline-block;
+            width: 6px;
+            height: 6px;
+            background-color: #999;
+            border-radius: 50%;
+            margin: 0 2px;
+            animation: bounce 1.4s infinite ease-in-out both;
+        }
+
+        .typing-indicator span:nth-child(1) { animation-delay: -0.32s; }
+        .typing-indicator span:nth-child(2) { animation-delay: -0.16s; }
+
+        @keyframes bounce {
+            0%, 80%, 100% { transform: scale(0); }
+            40% { transform: scale(1); }
+        }
+
+        /* Download Button */
+        .download-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            background-color: var(--primary-accent);
+            color: white;
+            border: none;
+            padding: 8px 12px;
+            border-radius: 6px;
+            font-size: 0.85rem;
+            font-weight: 500;
+            cursor: pointer;
+            margin-top: 10px;
+            transition: background 0.2s;
+            text-decoration: none;
+        }
+
+        .download-btn:hover {
+            background-color: #0d6b60;
+        }
+
+        /* Quick Replies */
+        .quick-replies {
+            padding: 10px 20px;
+            background-color: #f0f0f0;
+            display: flex;
+            gap: 10px;
+            overflow-x: auto;
+            white-space: nowrap;
+            border-top: 1px solid #ddd;
+        }
+
+        .quick-replies::-webkit-scrollbar {
+            height: 4px;
+        }
+        .quick-replies::-webkit-scrollbar-thumb {
+            background-color: #ccc;
+        }
+
+        .chip {
+            background-color: white;
+            color: var(--primary-accent);
+            border: 1px solid var(--primary-accent);
+            padding: 6px 14px;
+            border-radius: 16px;
+            font-size: 0.85rem;
+            cursor: pointer;
+            transition: all 0.2s;
+            flex-shrink: 0;
+        }
+
+        .chip:hover {
+            background-color: var(--primary-accent);
+            color: white;
+        }
+
+        /* Input Area */
+        .chat-input-area {
+            display: flex;
+            padding: 15px 20px;
+            background-color: #f0f0f0;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .input-box {
+            flex: 1;
+            padding: 12px 15px;
+            border: none;
+            border-radius: 24px;
+            font-size: 1rem;
+            font-family: inherit;
+            outline: none;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+        }
+
+        .send-btn {
+            width: 44px;
+            height: 44px;
+            border-radius: 50%;
+            background-color: var(--primary-accent);
+            color: white;
+            border: none;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .send-btn:hover {
+            background-color: #0d6b60;
+        }
+
+        .send-btn svg {
+            width: 20px;
+            height: 20px;
+            fill: currentColor;
+            transform: translateX(2px);
+        }
+
+        /* --- Right Panel (Form) --- */
+        .form-panel {
+            flex: 4;
+            background-color: white;
+            display: flex;
+            flex-direction: column;
+            overflow-y: auto;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+
+        .form-panel.highlight {
+            animation: pulse-border 1.5s ease;
+            box-shadow: inset 0 0 0 3px var(--success-color);
+        }
+
+        @keyframes pulse-border {
+            0% { box-shadow: inset 0 0 0 0px rgba(37, 211, 102, 0); }
+            50% { box-shadow: inset 0 0 0 4px rgba(37, 211, 102, 1); }
+            100% { box-shadow: inset 0 0 0 3px var(--success-color); }
+        }
+
+        .form-header {
+            background-color: #f8f9fa;
+            padding: 25px 30px;
+            border-bottom: 1px solid #eee;
+            text-align: center;
+        }
+
+        .form-header h2 {
+            font-size: 1.4rem;
+            color: var(--text-dark);
+            margin-bottom: 8px;
+        }
+
+        .form-header p {
+            font-size: 0.9rem;
+            color: var(--text-light);
+        }
+
+        .lead-form {
+            padding: 30px;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .form-group label {
+            font-size: 0.9rem;
+            font-weight: 500;
+            color: var(--text-dark);
+        }
+
+        .form-group input, .form-group select {
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 0.95rem;
+            font-family: inherit;
+            outline: none;
+            transition: border 0.2s;
+        }
+
+        .form-group input:focus, .form-group select:focus {
+            border-color: var(--primary-accent);
+        }
+
+        .submit-btn {
+            background-color: var(--success-color);
+            color: white;
+            border: none;
+            padding: 14px;
+            border-radius: 6px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.2s;
+            margin-top: 10px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .submit-btn:hover {
+            background-color: #1da851;
+        }
+
+        .submit-btn:disabled {
+            background-color: #a5d6a7;
+            cursor: not-allowed;
+        }
+
+        .success-overlay {
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(255,255,255,0.95);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 10;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s;
+        }
+
+        .success-overlay.show {
+            opacity: 1;
+            pointer-events: all;
+        }
+
+        .success-checkmark {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            display: block;
+            stroke-width: 2;
+            stroke: var(--success-color);
+            stroke-miterlimit: 10;
+            box-shadow: inset 0px 0px 0px var(--success-color);
+            animation: fill .4s ease-in-out .4s forwards, scale .3s ease-in-out .9s both;
+        }
+
+        .success-checkmark__circle {
+            stroke-dasharray: 166;
+            stroke-dashoffset: 166;
+            stroke-width: 2;
+            stroke-miterlimit: 10;
+            stroke: var(--success-color);
+            fill: none;
+            animation: stroke 0.6s cubic-bezier(0.65, 0, 0.45, 1) forwards;
+        }
+
+        .success-checkmark__check {
+            transform-origin: 50% 50%;
+            stroke-dasharray: 48;
+            stroke-dashoffset: 48;
+            animation: stroke 0.3s cubic-bezier(0.65, 0, 0.45, 1) 0.8s forwards;
+        }
+
+        @keyframes stroke { 100% { stroke-dashoffset: 0; } }
+        @keyframes scale { 0%, 100% { transform: none; } 50% { transform: scale3d(1.1, 1.1, 1); } }
+        @keyframes fill { 100% { box-shadow: inset 0px 0px 0px 30px white; } }
+
+        .success-text {
+            margin-top: 20px;
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: var(--text-dark);
+            text-align: center;
+        }
+
+        /* Summary Card in Chat */
+        .summary-card {
+            background: #f8f9fa;
+            border-left: 4px solid var(--success-color);
+            padding: 10px;
+            margin-top: 10px;
+            border-radius: 4px;
+            font-size: 0.85rem;
+        }
+        .summary-card div {
+            margin-bottom: 3px;
+        }
+
+        /* Modal Styles */
+        .modal-overlay {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.5);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 100;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.2s;
+        }
+
+        .modal-overlay.show {
+            opacity: 1;
+            pointer-events: all;
+        }
+
+        .modal-content {
+            background: white;
+            width: 90%;
+            max-width: 900px;
+            max-height: 80vh;
+            border-radius: 8px;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+
+        .modal-header {
+            padding: 20px;
+            border-bottom: 1px solid #eee;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .modal-header h2 {
+            font-size: 1.3rem;
+            color: var(--text-dark);
+        }
+
+        .close-btn {
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            cursor: pointer;
+            color: var(--text-light);
+        }
+
+        .modal-body {
+            padding: 20px;
+            overflow-y: auto;
+        }
+
+        .leads-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .leads-table th, .leads-table td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #eee;
+            font-size: 0.9rem;
+        }
+
+        .leads-table th {
+            font-weight: 600;
+            color: var(--text-dark);
+            background-color: #f8f9fa;
+        }
+
+        .modal-footer {
+            padding: 15px 20px;
+            border-top: 1px solid #eee;
+            display: flex;
+            justify-content: flex-end;
+        }
+
+        .btn-export {
+            background-color: var(--primary-accent);
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 4px;
+            font-weight: 500;
+            cursor: pointer;
+        }
+
+        /* Mobile Responsiveness */
+        @media (max-width: 900px) {
+            .app-container {
+                flex-direction: column;
+            }
+            .chat-panel {
+                flex: 1;
+                height: 100vh;
+            }
+            .form-panel {
+                position: fixed;
+                top: 100%;
+                left: 0;
+                width: 100%;
+                height: 85vh;
+                z-index: 50;
+                border-top-left-radius: 20px;
+                border-top-right-radius: 20px;
+                box-shadow: 0 -5px 20px rgba(0,0,0,0.15);
+            }
+            .form-panel.highlight, .form-panel.open-mobile {
+                top: 15vh;
+            }
+        }
+    </style>
+</head>
+<body>
+
+<div class="app-container">
+    <!-- Chat Panel -->
+    <div class="chat-panel">
+        <div class="chat-header">
+            <div class="header-left">
+                <div class="app-title">QuanTravel AI ✈️</div>
+            </div>
+            <div class="header-right">
+                <div class="leads-counter" id="leadsCounter">Leads (0)</div>
+                <button class="btn-view-leads" onclick="openLeadsModal()">View Leads</button>
+            </div>
+        </div>
+
+        <div class="chat-history" id="chatHistory">
+            <!-- Messages go here -->
+            <div class="typing-indicator" id="typingIndicator">
+                <span></span><span></span><span></span>
+            </div>
+        </div>
+
+        <div class="quick-replies" id="quickReplies">
+            <!-- Chips go here -->
+        </div>
+
+        <div class="chat-input-area">
+            <input type="text" id="userInput" class="input-box" placeholder="Type a message..." autocomplete="off" onkeypress="handleKeyPress(event)">
+            <button class="send-btn" onclick="sendMessage()">
+                <svg viewBox="0 0 24 24">
+                    <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"></path>
+                </svg>
+            </button>
+        </div>
+    </div>
+
+    <!-- Form Panel -->
+    <div class="form-panel" id="formPanel">
+        <div class="form-header">
+            <h2>Travel Expert Assistance</h2>
+            <p>Let our human experts perfect your AI itinerary.</p>
+        </div>
+        <form class="lead-form" id="leadForm" onsubmit="handleFormSubmit(event)">
+            <div class="form-group">
+                <label for="fullName">Full Name</label>
+                <input type="text" id="fullName" required placeholder="John Doe">
+            </div>
+            <div class="form-group">
+                <label for="email">Email</label>
+                <input type="email" id="email" required placeholder="john@example.com">
+            </div>
+            <div class="form-group">
+                <label for="phone">Phone Number</label>
+                <input type="tel" id="phone" required placeholder="+1 234 567 8900">
+            </div>
+            <div class="form-group">
+                <label for="travelDate">Tentative Travel Date</label>
+                <input type="date" id="travelDate" required>
+            </div>
+            <div class="form-group">
+                <label for="budget">Budget Range</label>
+                <select id="budget" required>
+                    <option value="" disabled selected>Select a range</option>
+                    <option value="Under ₹25k">Under ₹25k</option>
+                    <option value="₹25k–₹50k">₹25k–₹50k</option>
+                    <option value="₹50k–₹1L">₹50k–₹1L</option>
+                    <option value="Above ₹1L">Above ₹1L</option>
+                </select>
+            </div>
+            <button type="submit" class="submit-btn" id="submitBtn">Submit Request</button>
+        </form>
+
+        <div class="success-overlay" id="successOverlay">
+            <svg class="success-checkmark" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 52 52">
+                <circle class="success-checkmark__circle" cx="26" cy="26" r="25" fill="none"/>
+                <path class="success-checkmark__check" fill="none" d="M14.1 27.2l7.1 7.2 16.7-16.8"/>
+            </svg>
+            <div class="success-text">Request Received!</div>
+        </div>
+    </div>
+</div>
+
+<!-- Leads Modal -->
+<div class="modal-overlay" id="leadsModal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2>Captured Leads</h2>
+            <button class="close-btn" onclick="closeLeadsModal()">&times;</button>
+        </div>
+        <div class="modal-body">
+            <table class="leads-table">
+                <thead>
+                    <tr>
+                        <th>Date</th>
+                        <th>Name</th>
+                        <th>Email</th>
+                        <th>Phone</th>
+                        <th>Travel Date</th>
+                        <th>Budget</th>
+                    </tr>
+                </thead>
+                <tbody id="leadsTableBody">
+                    <!-- Rows generated via JS -->
+                </tbody>
+            </table>
+            <div id="noLeadsMsg" style="text-align: center; padding: 20px; color: var(--text-light); display: none;">
+                No leads captured yet.
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button class="btn-export" onclick="exportToCSV()">Export CSV</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    // --- Configuration & State ---
+    const API_KEY = "YOUR_API_KEY_HERE"; // Hardcoded as requested
+    
+    let chatStage = 0;
+    let itineraryText = "";
+    let conversationHistory = [];
+    let leads = JSON.parse(localStorage.getItem('quanTravelLeads') || '[]');
+    
+    // UI Elements
+    const chatHistoryEl = document.getElementById('chatHistory');
+    const typingIndicatorEl = document.getElementById('typingIndicator');
+    const quickRepliesEl = document.getElementById('quickReplies');
+    const userInputEl = document.getElementById('userInput');
+    const formPanelEl = document.getElementById('formPanel');
+    const leadsCounterEl = document.getElementById('leadsCounter');
+
+    // Quick Replies Configuration per Stage
+    const quickRepliesByStage = {
+        0: ["Paris", "Bali", "Japan", "New York", "Switzerland"],
+        1: ["3 Days", "5 Days", "7 Days", "10 Days", "2 Weeks"],
+        2: ["Under ₹25k", "₹25k–₹50k", "$1000", "Luxury", "Backpacker"],
+        3: ["Adventure", "Relaxation", "Food & Culture", "Nature & Wildlife"],
+        4: ["Yes, please! 😊", "No, I'm good"],
+        6: ["Yes, plan another!"]
+    };
+
+    // Initialization
+    window.onload = () => {
+        updateLeadsCounter();
+        
+        // Initial Bot Message
+        setTimeout(() => {
+            conversationHistory.push({ role: "user", parts: [{ text: "Hi, I need help planning a trip." }] });
+            const greeting = "Hi! I'm QuanTravel AI ✈️ Your personal travel assistant! Where would you like to travel?";
+            conversationHistory.push({ role: "model", parts: [{ text: greeting }] });
+            appendBotMessage(greeting);
+            renderQuickReplies(0);
+        }, 500);
+    };
+
+    function updateLeadsCounter() {
+        leadsCounterEl.innerText = `Leads (${leads.length})`;
+    }
+
+    // --- Core Chat Functions ---
+
+    function getTimestamp() {
+        const now = new Date();
+        let hours = now.getHours();
+        let minutes = now.getMinutes();
+        const ampm = hours >= 12 ? 'PM' : 'AM';
+        hours = hours % 12;
+        hours = hours ? hours : 12; // the hour '0' should be '12'
+        minutes = minutes < 10 ? '0' + minutes : minutes;
+        return `${hours}:${minutes} ${ampm}`;
+    }
+
+    function formatText(text) {
+        // Simple markdown to HTML conversion
+        let formatted = text
+            .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+            .replace(/\*(.*?)\*/g, '<em>$1</em>')
+            .replace(/\n/g, '<br>');
+        return formatted;
+    }
+
+    function scrollToBottom() {
+        chatHistoryEl.scrollTop = chatHistoryEl.scrollHeight;
+    }
+
+    function appendUserMessage(text) {
+        const msgHtml = `
+            <div class="message-row user">
+                <div class="message-bubble">
+                    ${text}
+                    <div class="msg-meta">
+                        ${getTimestamp()} <span class="msg-ticks">✓✓</span>
+                    </div>
+                </div>
+            </div>
+        `;
+        // Insert before typing indicator
+        typingIndicatorEl.insertAdjacentHTML('beforebegin', msgHtml);
+        scrollToBottom();
+    }
+
+    function appendBotMessage(text, isHtml = false, appendRaw = '') {
+        const content = isHtml ? text : formatText(text) + appendRaw;
+        const msgHtml = `
+            <div class="message-row bot">
+                <div class="message-bubble">
+                    ${content}
+                    <div class="msg-meta">
+                        ${getTimestamp()}
+                    </div>
+                </div>
+            </div>
+        `;
+        typingIndicatorEl.insertAdjacentHTML('beforebegin', msgHtml);
+        scrollToBottom();
+    }
+
+    function showTyping() {
+        typingIndicatorEl.style.display = 'block';
+        scrollToBottom();
+    }
+
+    function hideTyping() {
+        typingIndicatorEl.style.display = 'none';
+    }
+
+    function renderQuickReplies(stage) {
+        quickRepliesEl.innerHTML = '';
+        const replies = quickRepliesByStage[stage] || [];
+        replies.forEach(reply => {
+            const btn = document.createElement('div');
+            btn.className = 'chip';
+            btn.innerText = reply;
+            btn.onclick = () => {
+                userInputEl.value = reply;
+                sendMessage();
+            };
+            quickRepliesEl.appendChild(btn);
+        });
+    }
+
+    // --- Chat Logic Flow ---
+
+    async function handleChatFlow(userText) {
+        // Stage progression
+        if (chatStage === 0) {
+            chatStage = 1;
+            setTimeout(() => {
+                const msg = "Amazing choice! How many days is your trip?";
+                conversationHistory.push({ role: "model", parts: [{ text: msg }] });
+                appendBotMessage(msg);
+                renderQuickReplies(1);
+            }, 600);
+        } else if (chatStage === 1) {
+            chatStage = 2;
+            setTimeout(() => {
+                const msg = "What's your approximate budget? (e.g. ₹50,000 or $500)";
+                conversationHistory.push({ role: "model", parts: [{ text: msg }] });
+                appendBotMessage(msg);
+                renderQuickReplies(2);
+            }, 600);
+        } else if (chatStage === 2) {
+            chatStage = 3;
+            setTimeout(() => {
+                const msg = "What are your interests? (e.g. adventure, food, culture, relaxation)";
+                conversationHistory.push({ role: "model", parts: [{ text: msg }] });
+                appendBotMessage(msg);
+                renderQuickReplies(3);
+            }, 600);
+        } else if (chatStage === 3) {
+            chatStage = 4;
+            quickRepliesEl.innerHTML = ''; // Clear chips while thinking
+            showTyping();
+            await callGeminiAPI();
+            hideTyping();
+        } else if (chatStage === 4) {
+            const txt = userText.toLowerCase();
+            if (txt.includes('yes') || txt.includes('sure') || txt.includes('please') || txt.includes('yeah')) {
+                chatStage = 5;
+                highlightForm();
+                appendBotMessage("Great! Please fill out the form on the right so our experts can reach out with the perfect package.");
+                quickRepliesEl.innerHTML = '';
+            } else {
+                chatStage = 6;
+                appendBotMessage("No worries! Have a fantastic trip! Let me know if you want to plan another one.");
+                renderQuickReplies(6);
+            }
+        } else if (chatStage === 6) {
+            // Restart flow
+            chatStage = 0;
+            conversationHistory = [
+                { role: "user", parts: [{ text: "Hi, I need help planning a trip." }] },
+                { role: "model", parts: [{ text: "Awesome! Where would you like to travel next?" }] }
+            ];
+            appendBotMessage("Awesome! Where would you like to travel next?");
+            renderQuickReplies(0);
+        }
+    }
+
+    function handleKeyPress(e) {
+        if (e.key === 'Enter') {
+            sendMessage();
+        }
+    }
+
+    function sendMessage() {
+        const text = userInputEl.value.trim();
+        if (!text) return;
+        
+        userInputEl.value = '';
+        appendUserMessage(text);
+        quickRepliesEl.innerHTML = ''; // Clear chips instantly
+        
+        // Build conversation history for Gemini
+        conversationHistory.push({ role: "user", parts: [{ text }] });
+
+        handleChatFlow(text);
+    }
+
+    // --- Gemini API Integration ---
+
+    async function callGeminiAPI() {
+        const systemPrompt = "You are a friendly, expert AI travel assistant. Generate detailed, realistic, day-by-day travel itineraries. Include morning, afternoon and evening activities. Suggest local food, hidden gems and practical travel tips. Keep responses warm, enthusiastic and concise. Format nicely with bold headings and emojis.";
+        
+        try {
+            const response = await fetch(
+                `https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent?key=${API_KEY}`,
+                {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                        systemInstruction: {
+                            parts: [{ text: systemPrompt }]
+                        },
+                        contents: conversationHistory
+                    })
+                }
+            );
+
+            if (!response.ok) {
+                const errorData = await response.json().catch(() => ({}));
+                throw new Error(errorData.error ? errorData.error.message : "API Network response was not ok");
+            }
+
+            const data = await response.json();
+            const botText = data.candidates[0].content.parts[0].text;
+            
+            // Save to history and global var for download
+            conversationHistory.push({ role: "model", parts: [{ text: botText }] });
+            itineraryText = botText;
+
+            // Render text + download button
+            const downloadBtnHtml = `<br><br><a href="#" class="download-btn" onclick="downloadItinerary(event)">⬇️ Download Itinerary</a>`;
+            appendBotMessage(botText, false, downloadBtnHtml);
+
+            // Proceed to next question automatically
+            setTimeout(() => {
+                appendBotMessage("Would you like me to save this plan and have a travel expert reach out to you? 😊");
+                renderQuickReplies(4);
+            }, 1500);
+
+        } catch (error) {
+            console.error("Gemini Error:", error);
+            appendBotMessage(`Oops! I'm having trouble connecting to my travel brain right now. Error: ${error.message}`);
+            renderQuickReplies(3); // Reset to allow retry
+            chatStage = 3;
+            conversationHistory.pop(); // Remove the last user message so they can retry
+        }
+    }
+
+    function downloadItinerary(e) {
+        e.preventDefault();
+        const blob = new Blob([itineraryText], { type: "text/plain;charset=utf-8" });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = "My_Travel_Itinerary.txt";
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+    }
+
+    // --- Form & Lead Capture Logic ---
+
+    function highlightForm() {
+        if (window.innerWidth <= 900) {
+            formPanelEl.classList.add('open-mobile');
+        } else {
+            formPanelEl.classList.add('highlight');
+            setTimeout(() => {
+                formPanelEl.classList.remove('highlight');
+            }, 1500);
+        }
+        document.getElementById('fullName').focus();
+    }
+
+    function handleFormSubmit(e) {
+        e.preventDefault();
+        
+        const lead = {
+            id: Date.now(),
+            date: new Date().toLocaleDateString(),
+            name: document.getElementById('fullName').value,
+            email: document.getElementById('email').value,
+            phone: document.getElementById('phone').value,
+            travelDate: document.getElementById('travelDate').value,
+            budget: document.getElementById('budget').value
+        };
+
+        // Save Lead
+        leads.push(lead);
+        localStorage.setItem('quanTravelLeads', JSON.stringify(leads));
+        updateLeadsCounter();
+
+        // Show Success Animation
+        const overlay = document.getElementById('successOverlay');
+        overlay.classList.add('show');
+        
+        // Append Summary Card to Chat
+        const summaryHtml = `
+            <div class="summary-card">
+                <strong>📋 Lead Captured</strong>
+                <div>Name: ${lead.name}</div>
+                <div>Budget: ${lead.budget}</div>
+                <div>Date: ${lead.travelDate}</div>
+            </div>
+        `;
+        
+        setTimeout(() => {
+            overlay.classList.remove('show');
+            document.getElementById('leadForm').reset();
+            if (window.innerWidth <= 900) formPanelEl.classList.remove('open-mobile');
+            
+            appendBotMessage("Details saved successfully!", false, summaryHtml);
+            
+            setTimeout(() => {
+                appendBotMessage("Perfect! Our team will contact you within 24 hours ✅ Want to plan another trip?");
+                chatStage = 6;
+                renderQuickReplies(6);
+            }, 1000);
+
+        }, 2000);
+    }
+
+    // --- Modal Logic ---
+
+    const modal = document.getElementById('leadsModal');
+    const tableBody = document.getElementById('leadsTableBody');
+    const noLeadsMsg = document.getElementById('noLeadsMsg');
+
+    function openLeadsModal() {
+        tableBody.innerHTML = '';
+        if (leads.length === 0) {
+            noLeadsMsg.style.display = 'block';
+            document.querySelector('.leads-table').style.display = 'none';
+        } else {
+            noLeadsMsg.style.display = 'none';
+            document.querySelector('.leads-table').style.display = 'table';
+            leads.forEach(lead => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td>${lead.date}</td>
+                    <td>${lead.name}</td>
+                    <td>${lead.email}</td>
+                    <td>${lead.phone}</td>
+                    <td>${lead.travelDate}</td>
+                    <td>${lead.budget}</td>
+                `;
+                tableBody.appendChild(tr);
+            });
+        }
+        modal.classList.add('show');
+    }
+
+    function closeLeadsModal() {
+        modal.classList.remove('show');
+    }
+
+    function exportToCSV() {
+        if (leads.length === 0) return alert("No leads to export.");
+        
+        const headers = ["Date", "Name", "Email", "Phone", "Travel Date", "Budget"];
+        const csvRows = [headers.join(",")];
+        
+        leads.forEach(l => {
+            const values = [
+                l.date,
+                `"${l.name}"`,
+                `"${l.email}"`,
+                `"${l.phone}"`,
+                `"${l.travelDate}"`,
+                `"${l.budget}"`
+            ];
+            csvRows.push(values.join(","));
+        });
+
+        const csvString = csvRows.join("\n");
+        const blob = new Blob([csvString], { type: "text/csv;charset=utf-8" });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = "QuanTravel_Leads.csv";
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+    }
+
+</script>
+</body>
+</html>
