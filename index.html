@@ -636,6 +636,12 @@
             }
         }
     </style>
+    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
+    <script type="text/javascript">
+        (function() {
+            emailjs.init("U8WHJuNek0lqy6-CD");
+        })();
+    </script>
 </head>
 <body>
 
@@ -754,7 +760,7 @@
 
 <script>
     // --- Configuration & State ---
-    const API_KEY = "YOUR_API_KEY_HERE"; // Hardcoded as requested
+    const API_KEY = ""; // Replace with your Gemini API key
     
     let chatStage = 0;
     let itineraryText = "";
@@ -1053,6 +1059,18 @@
         localStorage.setItem('quanTravelLeads', JSON.stringify(leads));
         updateLeadsCounter();
 
+        // Send email notification
+        emailjs.send("service_cff0smh", "template_hx1446v", {
+            name: lead.name,
+            email: lead.email,
+            phone: lead.phone,
+            travelDate: lead.travelDate,
+            budget: lead.budget
+        }).then(
+            (response) => { console.log('Email sent successfully!', response.status, response.text); },
+            (error) => { console.error('Email sending failed...', error); }
+        );
+
         // Show Success Animation
         const overlay = document.getElementById('successOverlay');
         overlay.classList.add('show');
@@ -1076,6 +1094,11 @@
             
             setTimeout(() => {
                 appendBotMessage("Perfect! Our team will contact you within 24 hours ✅ Want to plan another trip?");
+                
+                setTimeout(() => {
+                    appendBotMessage("📧 A confirmation has been sent to your email! Meanwhile, feel free to explore another destination or check out our travel packages. Our expert will reach out to you shortly on your provided number. 😊");
+                }, 3000);
+
                 chatStage = 6;
                 renderQuickReplies(6);
             }, 1000);
