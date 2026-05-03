@@ -122,5 +122,5 @@ Travel agencies waste hours daily answering repetitive enquiries. QuanTravel AI 
 
 ## 👤 Submitted By
 
-**[Your Name]**
-QuAnHack Internship Final Round — AI Workflow Challenge
+Sarthak Parouha
+QuAnHack Solution Internship Final Round — AI Workflow Challenge
